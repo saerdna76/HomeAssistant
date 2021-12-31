@@ -1,3 +1,5 @@
+#ver 1.1
+
 blueprint:
   name: HVAC Pause
   description: Pauses HVAC when windows/doors open; resumes last state once closed
