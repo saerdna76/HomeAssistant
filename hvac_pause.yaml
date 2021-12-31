@@ -4,21 +4,6 @@ blueprint:
   domain: automation
 
   input:
-
-    paused_state:
-      description: Paused status input_select.
-      name: Paused State Input Select
-      selector:
-        entity:
-          domain: input_select
-
-    hvac_mode:
-      description: HVAC mode input_select. (Stores HVAC mode while paused)
-      name: HVAC Input Select
-      selector:
-        entity:
-          domain: input_select
-
     climate_device:
       description: Climate entity used for climate control. 
       name: Climate Device
@@ -40,7 +25,7 @@ blueprint:
       selector:
         number:
           min: 0
-          max: 120
+          max: 60
           unit_of_measurement: "Minutes"
 
     pause_delay_secs:
@@ -60,7 +45,7 @@ blueprint:
       selector:
         number:
           min: 0
-          max: 120
+          max: 60
           unit_of_measurement: "Minutes"
 
     resume_delay_secs:
@@ -73,15 +58,7 @@ blueprint:
           max: 59
           unit_of_measurement: "Seconds"
         
-# Translates inputs to variables for use in templates.
-variables:
-  climate_device: !input climate_device
-  hvac_mode: !input hvac_mode
-  paused_state: !input paused_state
-
-mode: single
 trigger:
-# Detects if group entity is on
 - platform: state
   entity_id: !input doors_windows
   from: 'off'
@@ -91,7 +68,6 @@ trigger:
     minutes: !input pause_delay_mins
     seconds: !input pause_delay_secs
   id: group_open
-# Detects if group entity is 'off'
 - platform: state
   entity_id: !input doors_windows
   id: group_close
@@ -100,61 +76,31 @@ trigger:
   for:
     hours: 0
     minutes: !input resume_delay_mins
-    seconds: !input resume_delay_secs
+    seconds: !input resume_delay_mins
 condition: []
 action:
-# Checks if HVAC paused input_select is in 'run', the group entity is 'on' 
-# and that the climate entity is not 'off'
 - choose:
   - conditions:
-    - condition: and
-      conditions:
-      - condition: state
-        entity_id: !input paused_state
-        state: run
-      - condition: trigger
-        id: group_open
-      - condition: not
-        conditions:
-        - condition: state
-          entity_id: !input climate_device
-          state: 'off'
-# Sets the HVAC input_select to current state of climate device
+    - condition: trigger
+      id: group_open
     sequence:
-    - service: input_select.select_option
-      target:
-        entity_id: !input hvac_mode
+    - service: scene.create
       data:
-        option: '{{ states(climate_device) }}'
-# Sets the climate device to 'off'
+        snapshot_entities: !input climate_device
+        scene_id: climate_snapshot
     - service: climate.turn_off
       target:
         entity_id: !input climate_device
-# Sets the HVAC paused input_select to 'paused'
-    - service: input_select.select_option
-      target:
-        entity_id: !input paused_state
-      data:
-        option: paused
-# Checks if HVAC paused input_select is 'paused' and the group entity is 'off'
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: !input paused_state
-        state: paused
+        entity_id: !input climate_device
+        attribute: hvac_action
+        state: idle
       - condition: trigger
         id: group_close
-# Sets the climate device to current state of HVAC input_select and
-# sets the HVAC paused input_select to 'run'
     sequence:
-    - service: climate.set_hvac_mode
+    - service: scene.turn_on
       target:
-        entity_id: !input climate_device
-      data:
-        hvac_mode: '{{ states(hvac_mode) }}'
-    - service: input_select.select_option
-      target:
-        entity_id: !input paused_state
-      data:
-        option: run
+        entity_id: scene.climate_snapshot
