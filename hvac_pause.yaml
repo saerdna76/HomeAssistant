@@ -96,8 +96,7 @@ action:
       conditions:
       - condition: state
         entity_id: !input climate_device
-        attribute: hvac_action
-        state: idle
+        state: 'off'
       - condition: trigger
         id: group_close
     sequence:
