@@ -1,4 +1,4 @@
-# ver 1.1
+# ver 1.2
 
 blueprint:
   name: HVAC Pause
@@ -59,7 +59,8 @@ blueprint:
           min: 0
           max: 59
           unit_of_measurement: "Seconds"
-        
+
+mode: single      
 trigger:
 - platform: state
   entity_id: !input doors_windows
@@ -70,38 +71,30 @@ trigger:
     minutes: !input pause_delay_mins
     seconds: !input pause_delay_secs
   id: group_open
-- platform: state
-  entity_id: !input doors_windows
-  id: group_close
-  from: 'on'
-  to: 'off'
-  for:
-    hours: 0
-    minutes: !input resume_delay_mins
-    seconds: !input resume_delay_mins
-condition: []
+condition:
+- condition: not
+  conditions:
+  - condition: state
+    entity_id: !input climate_device
+    state: 'off'
 action:
-- choose:
-  - conditions:
-    - condition: trigger
-      id: group_open
-    sequence:
-    - service: scene.create
-      data:
-        snapshot_entities: !input climate_device
-        scene_id: climate_snapshot
-    - service: climate.turn_off
-      target:
-        entity_id: !input climate_device
-  - conditions:
-    - condition: and
-      conditions:
-      - condition: state
-        entity_id: !input climate_device
-        state: 'off'
-      - condition: trigger
-        id: group_close
-    sequence:
-    - service: scene.turn_on
-      target:
-        entity_id: scene.climate_snapshot
+- service: scene.create
+  data:
+    scene_id: climate_snapshot
+    snapshot_entities: !input climate_device
+- service: climate.set_hvac_mode
+  target:
+    entity_id: !input climate_device
+  data:
+    hvac_mode: 'off'
+- wait_for_trigger:
+  - platform: state
+    entity_id: !input doors_windows
+    from: 'on'
+    to: 'off'
+    for:
+      hours: 0
+      minutes: !input resume_delay_mins
+      seconds: !input resume_delay_secs
+  continue_on_timeout: false
+- scene: scene.climate_snapshot
