@@ -19,24 +19,21 @@ trigger:
       minutes: 5
       seconds: 0
     above: '25'
+
 condition:
   - condition: numeric_state
     entity_id: sensor.dwd_speyer_forcast_today_temperature
     above: '29.9'
+
 action:
   - if:
       - condition: numeric_state
         entity_id: sensor.dwd_speyer_forcast_today_temperature
         above: '33.9'
     then:
-      - device_id: ebd0e7d588ab98d6b40fa67697f3a9c5
-        domain: cover
-        entity_id: !input target_cover
+      - entity_id: !input target_cover
         type: set_position
         position: 20
-  - device_id: ebd0e7d588ab98d6b40fa67697f3a9c5
-    domain: cover
-    entity_id: !input target_cover
+  - entity_id: !input target_cover
     type: set_position
     position: 40
-mode: single
