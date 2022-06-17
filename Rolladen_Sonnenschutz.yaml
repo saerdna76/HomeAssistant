@@ -1,5 +1,16 @@
-alias: OGKU Sonenschutz
-description: ''
+blueprint:
+  name: Rolladen Sonnenschutz
+  description: fährt Rolladen bei überschreiten von Grenzwerten nach unten um die Einstrahlung zu minimieren
+  domain: automation
+  input:
+    target_cover:
+      name: Rolladen
+      description: Rolladen welcher gesteuert wird.
+      selector:
+        target:
+          entity:
+            domain: cover
+
 trigger:
   - platform: numeric_state
     entity_id: sensor.weewx_temperatur_aussen
@@ -20,12 +31,12 @@ action:
     then:
       - device_id: ebd0e7d588ab98d6b40fa67697f3a9c5
         domain: cover
-        entity_id: cover.sh_ogkuro01
+        entity_id: !input target_cover
         type: set_position
         position: 20
   - device_id: ebd0e7d588ab98d6b40fa67697f3a9c5
     domain: cover
-    entity_id: cover.sh_ogkuro01
+    entity_id: !input target_cover
     type: set_position
     position: 40
 mode: single
