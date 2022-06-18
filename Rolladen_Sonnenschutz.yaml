@@ -26,14 +26,7 @@ condition:
     above: '29.9'
 
 action:
-  - if:
-      - condition: numeric_state
-        entity_id: sensor.dwd_speyer_forcast_today_temperature
-        above: '33.9'
-    then:
-      - entity_id: !input target_cover
-        type: set_position
-        position: 20
-  - entity_id: !input target_cover
-    type: set_position
-    position: 40
+  - service: COVER.SET_COVER_POSITION
+    data:
+      entity_id: !input target_cover
+      position: 40
